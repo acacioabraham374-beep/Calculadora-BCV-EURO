@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f5f0ff">
+  <link rel="manifest" href="manifest.json">
+  <title>Calculadora BCV</title>
+  <script>try{var t=localStorage.getItem('calc_theme');if(t)document.documentElement.setAttribute('data-theme',t);var m=localStorage.getItem('calc_mode')||'auto';document.documentElement.setAttribute('data-mode',(m==='dark'||(m==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches))?'dark':'light');}catch(e){}</script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <h1>Calculadora BCV</h1>
+    <button id="menuBtn" class="icon-btn" type="button" aria-label="Menú">
+      <svg viewBox="0 0 24 24"><path d="M12 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm0 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm0 6a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></svg>
+    </button>
+    <div id="menu" class="menu" hidden>
+      <button type="button" data-act="history">Historial</button>
+      <button type="button" data-act="cur" id="curSwitch">Calcular a tasa euro</button>
+      <button type="button" data-act="rates">Tasas por fecha</button>
+      <button type="button" data-act="theme">Tema de color</button>
+      <button type="button" data-act="apk" id="apkBtn" hidden>Descargar app Android</button>
+      <button type="button" data-act="wake" id="wakeBtn">Pantalla encendida: No</button>
+    </div>
+  </header>
+
+  <div class="pages">
+
+    <!-- Inicio -->
+    <section id="pgHome" class="page home">
+      <h2>Bienvenido</h2>
+      <p class="lead">Tasas actuales del BCV</p>
+
+      <div class="rate-card">
+        <span class="lbl"><i class="coin">$</i>Dólar BCV</span>
+        <div id="dolarVal" class="val">—</div>
+        <div id="dolarVar" class="var"></div>
+        <div id="dolarPar" class="par"></div>
+      </div>
+      <div class="rate-card euro">
+        <span class="lbl"><i class="coin">€</i>Euro BCV</span>
+        <div id="euroVal" class="val">—</div>
+        <div id="euroVar" class="var"></div>
+        <div id="euroPar" class="par"></div>
+      </div>
+
+      <p id="updText" class="upd">Última actualización: —</p>
+      <p id="homeStatus" class="chip" data-state="loading">Obteniendo tasas…</p>
+
+      <div class="actions">
+        <button id="shareBtn" class="act" type="button">
+          <svg viewBox="0 0 24 24"><path d="M18 16.1c-.8 0-1.5.3-2 .8l-7.1-4.2c.1-.2.1-.5.1-.7s0-.5-.1-.7L16 7.2c.5.5 1.2.8 2 .8a3 3 0 1 0-3-3c0 .2 0 .5.1.7L8 9.8A3 3 0 1 0 6 15c.8 0 1.5-.3 2-.8l7.1 4.2c-.1.2-.1.4-.1.6a2.9 2.9 0 1 0 3-2.9z"/></svg>Compartir
+        </button>
+        <button id="refreshBtn" class="act" type="button">
+          <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>Actualizar
+        </button>
+      </div>
+    </section>
+
+    <!-- Calculadora -->
+    <section id="pgCalc" class="page calc" hidden>
+      <div class="field big">
+        <button id="copyCalc" class="copy-btn abs" type="button" aria-label="Copiar resultado"><svg viewBox="0 0 24 24"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg></button>
+        <div id="cHist" class="expr-hist"></div>
+        <div id="cMain" class="main-display">0</div>
+        <div id="cSub" class="sub-value"></div>
+      </div>
+    </section>
+
+    <!-- Calculadora dólar / euro -->
+    <section id="pgCur" class="page cur" hidden>
+      <div class="status-row">
+        <span id="curStatus" class="chip" data-state="loading">Obteniendo tasas…</span>
+        <button id="rateBtn" class="mini-btn" type="button">Editar tasa</button>
+      </div>
+
+      <div class="field">
+        <div class="field-head"><span id="inTag" class="tag">Bs.</span><span id="inName" class="fname">Bolívares (VES)</span></div>
+        <div id="uHist" class="expr-hist"></div>
+        <div id="uMain" class="main-display">0</div>
+      </div>
+
+      <button id="swapBtn" class="swap" type="button" aria-label="Invertir conversión">
+        <svg viewBox="0 0 24 24"><path d="M16 17.01V10h-2v7.01h-3L15 21l4-3.99h-3zM9 3 5 6.99h3V14h2V6.99h3L9 3z"/></svg>
+      </button>
+
+      <div class="field">
+        <div class="field-head"><span id="outTag" class="tag">$</span><span id="outName" class="fname">Dólares (USD)</span>
+          <button id="copyCur" class="copy-btn" type="button" aria-label="Copiar monto"><svg viewBox="0 0 24 24"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg></button>
+        </div>
+        <div id="uOut" class="out-value">0,00</div>
+        <div id="uAlt" class="alt"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Teclado compartido -->
+  <section class="keypad" id="keypad" hidden>
+    <button class="key key-ac" data-key="AC" type="button">AC</button>
+    <button class="key key-op" data-key="()" type="button">( )</button>
+    <button class="key key-op" data-key="%" type="button">%</button>
+    <button class="key key-op" data-key="/" type="button">÷</button>
+
+    <button class="key" data-key="7" type="button">7</button>
+    <button class="key" data-key="8" type="button">8</button>
+    <button class="key" data-key="9" type="button">9</button>
+    <button class="key key-op" data-key="*" type="button">×</button>
+
+    <button class="key" data-key="4" type="button">4</button>
+    <button class="key" data-key="5" type="button">5</button>
+    <button class="key" data-key="6" type="button">6</button>
+    <button class="key key-op" data-key="-" type="button">−</button>
+
+    <button class="key" data-key="1" type="button">1</button>
+    <button class="key" data-key="2" type="button">2</button>
+    <button class="key" data-key="3" type="button">3</button>
+    <button class="key key-op" data-key="+" type="button">+</button>
+
+    <button class="key" data-key="0" type="button">0</button>
+    <button class="key" data-key="." type="button">,</button>
+    <button class="key" data-key="DEL" type="button" aria-label="Borrar">
+      <svg viewBox="0 0 24 24"><path d="M22 3H7l-5 9 5 9h15a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zm-3.3 12.3-1.4 1.4L14 13.4l-3.3 3.3-1.4-1.4 3.3-3.3-3.3-3.3 1.4-1.4 3.3 3.3 3.3-3.3 1.4 1.4-3.3 3.3z"/></svg>
+    </button>
+    <button class="key key-eq" data-key="=" type="button">=</button>
+  </section>
+
+  <!-- Pestañas -->
+  <nav class="nav">
+    <button class="nav-btn active" type="button" data-page="home" id="navHome">
+      <span class="nav-ico"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></span>Inicio
+    </button>
+    <button class="nav-btn" type="button" data-page="calc" id="navCalc">
+      <span class="nav-ico"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><rect x="8" y="6" width="8" height="3" rx="1"/><circle cx="9" cy="13" r="1.2"/><circle cx="12" cy="13" r="1.2"/><circle cx="15" cy="13" r="1.2"/><circle cx="9" cy="17" r="1.2"/><circle cx="12" cy="17" r="1.2"/><circle cx="15" cy="17" r="1.2"/></svg></span>Calculadora
+    </button>
+    <button class="nav-btn" type="button" data-page="cur" id="navCur">
+      <span class="nav-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><text id="navSym" x="12" y="16.6" text-anchor="middle" font-size="12" font-weight="700" font-family="Roboto, Arial, sans-serif">$</text></svg></span><span id="navCurLbl">Calculadora dólar</span>
+    </button>
+  </nav>
+</div>
+
+<!-- Historial -->
+<div id="histPanel" class="panel" hidden>
+  <div class="panel-bar">
+    <button id="histClose" class="icon-btn" type="button" aria-label="Cerrar">
+      <svg viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg>
+    </button>
+    <h2>Historial</h2>
+    <button id="histClear" class="text-btn" type="button">Borrar</button>
+  </div>
+  <div id="histList" class="hist-list"></div>
+</div>
+
+<!-- Tasas por fecha -->
+<div id="ratesPanel" class="panel" hidden>
+  <div class="panel-bar">
+    <button id="ratesClose" class="icon-btn" type="button" aria-label="Cerrar">
+      <svg viewBox="0 0 24 24"><path d="M20 11H7.8l5.6-5.6L12 4l-8 8 8 8 1.4-1.4L7.8 13H20z"/></svg>
+    </button>
+    <h2>Tasas por fecha</h2>
+  </div>
+  <div id="ratesList" class="hist-list"></div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<!-- Tema -->
+<div id="themeModal" class="modal" hidden>
+  <div class="modal-card">
+    <h2>Tema de color</h2>
+    <div class="themes">
+      <button class="theme-btn" data-t="purple" type="button"><span class="sw" style="background:#7c3aed"></span>Morado</button>
+      <button class="theme-btn" data-t="green" type="button"><span class="sw" style="background:#16a34a"></span>Verde</button>
+      <button class="theme-btn" data-t="blue" type="button"><span class="sw" style="background:#2563eb"></span>Azul</button>
+      <button class="theme-btn" data-t="orange" type="button"><span class="sw" style="background:#ea580c"></span>Naranja</button>
+      <button class="theme-btn" data-t="pink" type="button"><span class="sw" style="background:#db2777"></span>Rosa</button>
+    </div>
+    <div class="themes modes"><button class="theme-btn" data-m="light" type="button">Claro</button><button class="theme-btn" data-m="dark" type="button">Oscuro</button><button class="theme-btn" data-m="auto" type="button">Sistema</button></div>
+    <div class="modal-actions"><button id="themeClose" class="modal-btn modal-btn-primary" type="button">Listo</button></div>
+  </div>
+</div>
+
+<!-- Tasa manual -->
+<div id="rateModal" class="modal" hidden>
+  <div class="modal-card">
+    <h2 id="rateTitle">Tasa manual (Bs. por USD)</h2>
+    <input id="rateInput" class="modal-input" type="text" inputmode="decimal" placeholder="Ej: 886,22" autocomplete="off">
+    <p id="rateError" class="modal-error"></p>
+    <div class="modal-actions">
+      <button id="rateRetry" class="modal-btn" type="button">Reintentar BCV</button>
+      <button id="rateCancel" class="modal-btn" type="button">Cancelar</button>
+      <button id="rateSave" class="modal-btn modal-btn-primary" type="button">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
